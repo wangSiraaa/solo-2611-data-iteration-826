@@ -1,0 +1,82 @@
+{
+  "passed": 15,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "uneven_spacing_pair_beats_raw_max_slope",
+      "passed": true,
+      "detail": "selected 2,9 (total 115) over raw-max 2 alone"
+    },
+    {
+      "name": "equal_total_strength_lex_tiebreak",
+      "passed": true,
+      "detail": "equal totals resolved to lexicographically smallest list"
+    },
+    {
+      "name": "no_endpoint_explicit",
+      "passed": true,
+      "detail": "reason: no selection of 2 candidate point(s) with pairwise volume separation >= 3 mL"
+    },
+    {
+      "name": "dp_matches_exhaustive_under_ten_points",
+      "passed": true,
+      "detail": "355104 (curve, strength, K, d) cases match exhaustive enumeration"
+    },
+    {
+      "name": "exclusion_reasons_match_brute_force",
+      "passed": true,
+      "detail": "16443 per-candidate optimum checks match brute force"
+    },
+    {
+      "name": "scale_300_points_k6",
+      "passed": true,
+      "detail": "298 candidates, selected ['1', '7', '14', '21', '28', '35']"
+    },
+    {
+      "name": "setup_store",
+      "passed": true,
+      "detail": "curves + method created"
+    },
+    {
+      "name": "endpoint_publication_and_explanation",
+      "passed": true,
+      "detail": "published 4,12 with explained exclusions"
+    },
+    {
+      "name": "two_endpoint_competition_published",
+      "passed": true,
+      "detail": "selected ['3', '9']"
+    },
+    {
+      "name": "negative_and_zero_effective_volume",
+      "passed": true,
+      "detail": "negative rejected, zero accepted with zero potency"
+    },
+    {
+      "name": "unequal_net_mass_weighting",
+      "passed": true,
+      "detail": "weighted average 3/400 != simple mean 7/600"
+    },
+    {
+      "name": "incomplete_batch_lists_gaps",
+      "passed": true,
+      "detail": "status INCOMPLETE, one gap listed, no average"
+    },
+    {
+      "name": "correction_changes_potency_and_old_report_immutable",
+      "passed": true,
+      "detail": "old 1/100 -> new 1/20; replay of old report stays 1/100"
+    },
+    {
+      "name": "threshold_correction_new_product",
+      "passed": true,
+      "detail": "threshold 1 -> ['5', '13'], threshold 7 -> ['11', '16'] (same total 15), threshold 60 -> NO_ENDPOINT"
+    },
+    {
+      "name": "potency_uses_only_public_products",
+      "passed": true,
+      "detail": "potency computed with private candidates deleted"
+    }
+  ],
+  "db": "var/validate.sqlite"
+}

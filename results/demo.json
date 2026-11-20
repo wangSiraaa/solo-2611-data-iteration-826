@@ -1,0 +1,81 @@
+{
+  "method": {
+    "id": 1,
+    "name": "dual-endpoint",
+    "version": 1,
+    "current_version": 1,
+    "low_volume": "0",
+    "high_volume": "30",
+    "threshold": "10",
+    "k": 2,
+    "min_gap": "2",
+    "equivalence_index": 2
+  },
+  "blank_endpoints": [
+    "7/2",
+    "23/2"
+  ],
+  "sample_a_endpoints": [
+    "4",
+    "12"
+  ],
+  "sample_b_endpoints": [
+    "15/4",
+    "47/4"
+  ],
+  "sample_a_objective": "98",
+  "brute_force_match": true,
+  "batch_report": {
+    "status": "COMPLETE",
+    "average": "3/400",
+    "per_sample": [
+      {
+        "sample": "A",
+        "potency": "1/50",
+        "net_mass": "100"
+      },
+      {
+        "sample": "B",
+        "potency": "1/300",
+        "net_mass": "300"
+      }
+    ]
+  },
+  "incomplete_report": {
+    "status": "INCOMPLETE",
+    "average": null,
+    "gaps": [
+      {
+        "sample_id": 3,
+        "sample_name": "bad-negative",
+        "failures": [
+          "negative effective volume: sample j-th volume 10 < blank j-th volume 20"
+        ]
+      }
+    ]
+  },
+  "recompute": {
+    "old_potency": "1/50",
+    "new_potency": "3/50",
+    "changed": true,
+    "old_report_status": "COMPLETE",
+    "old_report_a_potency": "1/50",
+    "old_report_id": 1,
+    "replay_old_report_a_potency": "1/50"
+  },
+  "explanation": {
+    "selected": [
+      "4",
+      "12"
+    ],
+    "objective": "98",
+    "excluded": [
+      {
+        "volume": "5",
+        "strength": "20",
+        "reason": "spacing conflict with selected volume 4 (gap < 2 mL)"
+      }
+    ]
+  },
+  "db": "var/demo.sqlite"
+}
