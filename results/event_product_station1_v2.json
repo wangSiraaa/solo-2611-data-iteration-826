@@ -1,0 +1,149 @@
+{
+  "events": [
+    {
+      "alarms": [
+        {
+          "predecessor_plan_no": null,
+          "predecessor_record": null,
+          "predecessor_residual": null,
+          "record": {
+            "arrived_at": "2026-01-01T08:00:00+00:00",
+            "center": "100",
+            "level": 1,
+            "plan_no": 1,
+            "potency": "120",
+            "received": true,
+            "registered_at": "2026-01-01T08:00:00+00:00",
+            "scale": "10",
+            "source_ref": "sample:ctrl-s1-p1",
+            "station": 1
+          },
+          "residual": "2",
+          "rules": [
+            "single"
+          ]
+        }
+      ],
+      "event_key": "S1-L1-P1-1",
+      "first_plan_no": 1,
+      "last_plan_no": 1,
+      "last_registered_at": "2026-01-01T08:00:00+00:00",
+      "level": 1,
+      "plan_numbers": [
+        1
+      ],
+      "station": 1
+    },
+    {
+      "alarms": [
+        {
+          "predecessor_plan_no": null,
+          "predecessor_record": null,
+          "predecessor_residual": null,
+          "record": {
+            "arrived_at": "2026-01-03T08:00:00+00:00",
+            "center": "100",
+            "level": 1,
+            "plan_no": 3,
+            "potency": "120",
+            "received": true,
+            "registered_at": "2026-01-03T08:00:00+00:00",
+            "scale": "10",
+            "source_ref": "sample:ctrl-s1-p3",
+            "station": 1
+          },
+          "residual": "2",
+          "rules": [
+            "single"
+          ]
+        }
+      ],
+      "event_key": "S1-L1-P3-3",
+      "first_plan_no": 3,
+      "last_plan_no": 3,
+      "last_registered_at": "2026-01-03T08:00:00+00:00",
+      "level": 1,
+      "plan_numbers": [
+        3
+      ],
+      "station": 1
+    }
+  ],
+  "measurements": [
+    {
+      "arrived_at": "2026-01-01T08:00:00+00:00",
+      "center": "100",
+      "level": 1,
+      "plan_no": 1,
+      "potency": "120",
+      "received": true,
+      "registered_at": "2026-01-01T08:00:00+00:00",
+      "scale": "10",
+      "source_ref": "sample:ctrl-s1-p1",
+      "station": 1
+    },
+    {
+      "arrived_at": "2026-01-02T08:00:00+00:00",
+      "center": "100",
+      "level": 1,
+      "plan_no": 2,
+      "potency": "100",
+      "received": true,
+      "registered_at": "2026-01-02T08:00:00+00:00",
+      "scale": "10",
+      "source_ref": "sample:ctrl-s1-p2",
+      "station": 1
+    },
+    {
+      "arrived_at": "2026-01-03T08:00:00+00:00",
+      "center": "100",
+      "level": 1,
+      "plan_no": 3,
+      "potency": "120",
+      "received": true,
+      "registered_at": "2026-01-03T08:00:00+00:00",
+      "scale": "10",
+      "source_ref": "sample:ctrl-s1-p3",
+      "station": 1
+    },
+    {
+      "arrived_at": "2026-01-04T08:00:00+00:00",
+      "center": "100",
+      "level": 1,
+      "plan_no": 4,
+      "potency": "100",
+      "received": true,
+      "registered_at": "2026-01-04T08:00:00+00:00",
+      "scale": "10",
+      "source_ref": "sample:ctrl-s1-p4",
+      "station": 1
+    },
+    {
+      "arrived_at": "2026-02-01T09:30:00+00:00",
+      "center": "100",
+      "level": 1,
+      "plan_no": 5,
+      "potency": "100",
+      "received": true,
+      "registered_at": "2026-01-05T08:00:00+00:00",
+      "scale": "10",
+      "source_ref": "sample:ctrl-s1-p5-corrected",
+      "station": 1
+    }
+  ],
+  "model": "control_ooc_events_v1",
+  "note": "plan 5 corrected to residual 0",
+  "product_ref": "station-1-history:v2",
+  "rules": {
+    "breaks": [
+      "missing",
+      "level_change",
+      "plan_gap"
+    ],
+    "paired": "continued predecessor, same sign, both abs >= 1",
+    "residual": "(potency - center) / scale",
+    "single": "abs(residual) >= 2"
+  },
+  "scope": "station-1-history",
+  "version": 2
+}

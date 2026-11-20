@@ -1,0 +1,539 @@
+{
+  "potency_entry": [
+    {
+      "station": 1,
+      "plan_no": 1,
+      "potency": "120"
+    },
+    {
+      "station": 1,
+      "plan_no": 2,
+      "potency": "100"
+    },
+    {
+      "station": 1,
+      "plan_no": 3,
+      "potency": "120"
+    },
+    {
+      "station": 1,
+      "plan_no": 4,
+      "potency": "100"
+    },
+    {
+      "station": 1,
+      "plan_no": 5,
+      "potency": "120"
+    }
+  ],
+  "stations": {
+    "1": {
+      "v1": {
+        "product_ref": "station-1-history:v1",
+        "version": 1,
+        "scope": "station-1-history",
+        "source": "internal",
+        "event_count": 3,
+        "event_keys": [
+          "S1-L1-P1-1",
+          "S1-L1-P3-3",
+          "S1-L1-P5-5"
+        ],
+        "events": [
+          {
+            "alarms": [
+              {
+                "predecessor_plan_no": null,
+                "predecessor_record": null,
+                "predecessor_residual": null,
+                "record": {
+                  "arrived_at": "2026-01-01T08:00:00+00:00",
+                  "center": "100",
+                  "level": 1,
+                  "plan_no": 1,
+                  "potency": "120",
+                  "received": true,
+                  "registered_at": "2026-01-01T08:00:00+00:00",
+                  "scale": "10",
+                  "source_ref": "sample:ctrl-s1-p1",
+                  "station": 1
+                },
+                "residual": "2",
+                "rules": [
+                  "single"
+                ]
+              }
+            ],
+            "event_key": "S1-L1-P1-1",
+            "first_plan_no": 1,
+            "last_plan_no": 1,
+            "last_registered_at": "2026-01-01T08:00:00+00:00",
+            "level": 1,
+            "plan_numbers": [
+              1
+            ],
+            "station": 1
+          },
+          {
+            "alarms": [
+              {
+                "predecessor_plan_no": null,
+                "predecessor_record": null,
+                "predecessor_residual": null,
+                "record": {
+                  "arrived_at": "2026-01-03T08:00:00+00:00",
+                  "center": "100",
+                  "level": 1,
+                  "plan_no": 3,
+                  "potency": "120",
+                  "received": true,
+                  "registered_at": "2026-01-03T08:00:00+00:00",
+                  "scale": "10",
+                  "source_ref": "sample:ctrl-s1-p3",
+                  "station": 1
+                },
+                "residual": "2",
+                "rules": [
+                  "single"
+                ]
+              }
+            ],
+            "event_key": "S1-L1-P3-3",
+            "first_plan_no": 3,
+            "last_plan_no": 3,
+            "last_registered_at": "2026-01-03T08:00:00+00:00",
+            "level": 1,
+            "plan_numbers": [
+              3
+            ],
+            "station": 1
+          },
+          {
+            "alarms": [
+              {
+                "predecessor_plan_no": null,
+                "predecessor_record": null,
+                "predecessor_residual": null,
+                "record": {
+                  "arrived_at": "2026-01-05T08:00:00+00:00",
+                  "center": "100",
+                  "level": 1,
+                  "plan_no": 5,
+                  "potency": "120",
+                  "received": true,
+                  "registered_at": "2026-01-05T08:00:00+00:00",
+                  "scale": "10",
+                  "source_ref": "sample:ctrl-s1-p5",
+                  "station": 1
+                },
+                "residual": "2",
+                "rules": [
+                  "single"
+                ]
+              }
+            ],
+            "event_key": "S1-L1-P5-5",
+            "first_plan_no": 5,
+            "last_plan_no": 5,
+            "last_registered_at": "2026-01-05T08:00:00+00:00",
+            "level": 1,
+            "plan_numbers": [
+              5
+            ],
+            "station": 1
+          }
+        ]
+      },
+      "policy_A_fee1": {
+        "net_indemnity": 11,
+        "total_payable": 12,
+        "total_fees": 1,
+        "rights_used": 1,
+        "rights_remaining": 0,
+        "decisions": [
+          {
+            "accident_index": 0,
+            "event_key": "S1-L1-P1-1",
+            "station": 1,
+            "first_plan_no": 1,
+            "last_plan_no": 1,
+            "last_registered_at": "2026-01-01T08:00:00+00:00",
+            "loss": 2,
+            "payable": 2,
+            "balance_before": 6,
+            "balance_after_claim": 4,
+            "restoration_used": false,
+            "restoration_fee": 0,
+            "balance_after": 4,
+            "rights_remaining": 1
+          },
+          {
+            "accident_index": 1,
+            "event_key": "S1-L1-P3-3",
+            "station": 1,
+            "first_plan_no": 3,
+            "last_plan_no": 3,
+            "last_registered_at": "2026-01-03T08:00:00+00:00",
+            "loss": 6,
+            "payable": 4,
+            "balance_before": 4,
+            "balance_after_claim": 0,
+            "restoration_used": true,
+            "restoration_fee": 1,
+            "balance_after": 6,
+            "rights_remaining": 0
+          },
+          {
+            "accident_index": 2,
+            "event_key": "S1-L1-P5-5",
+            "station": 1,
+            "first_plan_no": 5,
+            "last_plan_no": 5,
+            "last_registered_at": "2026-01-05T08:00:00+00:00",
+            "loss": 6,
+            "payable": 6,
+            "balance_before": 6,
+            "balance_after_claim": 0,
+            "restoration_used": false,
+            "restoration_fee": 0,
+            "balance_after": 0,
+            "rights_remaining": 0
+          }
+        ]
+      },
+      "policy_B_fee7": {
+        "net_indemnity": 6,
+        "total_payable": 6,
+        "total_fees": 0,
+        "rights_used": 0,
+        "rights_remaining": 1,
+        "decisions": [
+          {
+            "accident_index": 0,
+            "event_key": "S1-L1-P1-1",
+            "station": 1,
+            "first_plan_no": 1,
+            "last_plan_no": 1,
+            "last_registered_at": "2026-01-01T08:00:00+00:00",
+            "loss": 2,
+            "payable": 2,
+            "balance_before": 6,
+            "balance_after_claim": 4,
+            "restoration_used": false,
+            "restoration_fee": 0,
+            "balance_after": 4,
+            "rights_remaining": 1
+          },
+          {
+            "accident_index": 1,
+            "event_key": "S1-L1-P3-3",
+            "station": 1,
+            "first_plan_no": 3,
+            "last_plan_no": 3,
+            "last_registered_at": "2026-01-03T08:00:00+00:00",
+            "loss": 6,
+            "payable": 4,
+            "balance_before": 4,
+            "balance_after_claim": 0,
+            "restoration_used": false,
+            "restoration_fee": 0,
+            "balance_after": 0,
+            "rights_remaining": 1
+          },
+          {
+            "accident_index": 2,
+            "event_key": "S1-L1-P5-5",
+            "station": 1,
+            "first_plan_no": 5,
+            "last_plan_no": 5,
+            "last_registered_at": "2026-01-05T08:00:00+00:00",
+            "loss": 6,
+            "payable": 0,
+            "balance_before": 0,
+            "balance_after_claim": 0,
+            "restoration_used": false,
+            "restoration_fee": 0,
+            "balance_after": 0,
+            "rights_remaining": 1
+          }
+        ]
+      },
+      "early_restore_after_first": {
+        "net_indemnity": 7,
+        "total_payable": 8,
+        "total_fees": 1,
+        "rights_used": 1,
+        "rights_remaining": 0,
+        "decisions": [
+          {
+            "accident_index": 0,
+            "event_key": "S1-L1-P1-1",
+            "station": 1,
+            "first_plan_no": 1,
+            "last_plan_no": 1,
+            "last_registered_at": "2026-01-01T08:00:00+00:00",
+            "loss": 2,
+            "payable": 2,
+            "balance_before": 6,
+            "balance_after_claim": 4,
+            "restoration_used": true,
+            "restoration_fee": 1,
+            "balance_after": 6,
+            "rights_remaining": 0
+          },
+          {
+            "accident_index": 1,
+            "event_key": "S1-L1-P3-3",
+            "station": 1,
+            "first_plan_no": 3,
+            "last_plan_no": 3,
+            "last_registered_at": "2026-01-03T08:00:00+00:00",
+            "loss": 6,
+            "payable": 6,
+            "balance_before": 6,
+            "balance_after_claim": 0,
+            "restoration_used": false,
+            "restoration_fee": 0,
+            "balance_after": 0,
+            "rights_remaining": 0
+          },
+          {
+            "accident_index": 2,
+            "event_key": "S1-L1-P5-5",
+            "station": 1,
+            "first_plan_no": 5,
+            "last_plan_no": 5,
+            "last_registered_at": "2026-01-05T08:00:00+00:00",
+            "loss": 6,
+            "payable": 0,
+            "balance_before": 0,
+            "balance_after_claim": 0,
+            "restoration_used": false,
+            "restoration_fee": 0,
+            "balance_after": 0,
+            "rights_remaining": 0
+          }
+        ]
+      },
+      "v2": {
+        "product_ref": "station-1-history:v2",
+        "version": 2,
+        "scope": "station-1-history",
+        "source": "internal",
+        "event_count": 2,
+        "event_keys": [
+          "S1-L1-P1-1",
+          "S1-L1-P3-3"
+        ],
+        "events": [
+          {
+            "alarms": [
+              {
+                "predecessor_plan_no": null,
+                "predecessor_record": null,
+                "predecessor_residual": null,
+                "record": {
+                  "arrived_at": "2026-01-01T08:00:00+00:00",
+                  "center": "100",
+                  "level": 1,
+                  "plan_no": 1,
+                  "potency": "120",
+                  "received": true,
+                  "registered_at": "2026-01-01T08:00:00+00:00",
+                  "scale": "10",
+                  "source_ref": "sample:ctrl-s1-p1",
+                  "station": 1
+                },
+                "residual": "2",
+                "rules": [
+                  "single"
+                ]
+              }
+            ],
+            "event_key": "S1-L1-P1-1",
+            "first_plan_no": 1,
+            "last_plan_no": 1,
+            "last_registered_at": "2026-01-01T08:00:00+00:00",
+            "level": 1,
+            "plan_numbers": [
+              1
+            ],
+            "station": 1
+          },
+          {
+            "alarms": [
+              {
+                "predecessor_plan_no": null,
+                "predecessor_record": null,
+                "predecessor_residual": null,
+                "record": {
+                  "arrived_at": "2026-01-03T08:00:00+00:00",
+                  "center": "100",
+                  "level": 1,
+                  "plan_no": 3,
+                  "potency": "120",
+                  "received": true,
+                  "registered_at": "2026-01-03T08:00:00+00:00",
+                  "scale": "10",
+                  "source_ref": "sample:ctrl-s1-p3",
+                  "station": 1
+                },
+                "residual": "2",
+                "rules": [
+                  "single"
+                ]
+              }
+            ],
+            "event_key": "S1-L1-P3-3",
+            "first_plan_no": 3,
+            "last_plan_no": 3,
+            "last_registered_at": "2026-01-03T08:00:00+00:00",
+            "level": 1,
+            "plan_numbers": [
+              3
+            ],
+            "station": 1
+          }
+        ]
+      },
+      "policy_A_after_correction": {
+        "net_indemnity": 7,
+        "total_payable": 8,
+        "total_fees": 1,
+        "rights_used": 1,
+        "rights_remaining": 0,
+        "decisions": [
+          {
+            "accident_index": 0,
+            "event_key": "S1-L1-P1-1",
+            "station": 1,
+            "first_plan_no": 1,
+            "last_plan_no": 1,
+            "last_registered_at": "2026-01-01T08:00:00+00:00",
+            "loss": 2,
+            "payable": 2,
+            "balance_before": 6,
+            "balance_after_claim": 4,
+            "restoration_used": true,
+            "restoration_fee": 1,
+            "balance_after": 6,
+            "rights_remaining": 0
+          },
+          {
+            "accident_index": 1,
+            "event_key": "S1-L1-P3-3",
+            "station": 1,
+            "first_plan_no": 3,
+            "last_plan_no": 3,
+            "last_registered_at": "2026-01-03T08:00:00+00:00",
+            "loss": 6,
+            "payable": 6,
+            "balance_before": 6,
+            "balance_after_claim": 0,
+            "restoration_used": false,
+            "restoration_fee": 0,
+            "balance_after": 0,
+            "rights_remaining": 0
+          }
+        ]
+      },
+      "historical_v1_recheck": {
+        "product_ref": "station-1-history:v1",
+        "net_indemnity": 11,
+        "matches_original": true
+      },
+      "offline_equivalent_product": {
+        "exported_to": "results/event_product_station1_v2.json",
+        "imported_ref": "station-1-history:v2",
+        "imported_source": "internal",
+        "offline_net_indemnity": 7,
+        "matches_stored": true
+      }
+    },
+    "2": {
+      "with_gap": {
+        "product_ref": "station-2-late:v1",
+        "events": [
+          "S2-L1-P1-1",
+          "S2-L1-P3-5"
+        ],
+        "plan": {
+          "net_indemnity": 7,
+          "total_payable": 7,
+          "total_fees": 0,
+          "rights_used": 0,
+          "rights_remaining": 0,
+          "decisions": [
+            {
+              "accident_index": 0,
+              "event_key": "S2-L1-P1-1",
+              "station": 2,
+              "first_plan_no": 1,
+              "last_plan_no": 1,
+              "last_registered_at": "2026-03-01T08:00:00+00:00",
+              "loss": 4,
+              "payable": 1,
+              "balance_before": 100,
+              "balance_after_claim": 99,
+              "restoration_used": false,
+              "restoration_fee": 0,
+              "balance_after": 99,
+              "rights_remaining": 0
+            },
+            {
+              "accident_index": 1,
+              "event_key": "S2-L1-P3-5",
+              "station": 2,
+              "first_plan_no": 3,
+              "last_plan_no": 5,
+              "last_registered_at": "2026-03-05T08:00:00+00:00",
+              "loss": 9,
+              "payable": 6,
+              "balance_before": 99,
+              "balance_after_claim": 93,
+              "restoration_used": false,
+              "restoration_fee": 0,
+              "balance_after": 93,
+              "rights_remaining": 0
+            }
+          ]
+        }
+      },
+      "after_late_arrival": {
+        "product_ref": "station-2-late:v2",
+        "events": [
+          "S2-L1-P1-5"
+        ],
+        "plan": {
+          "net_indemnity": 13,
+          "total_payable": 13,
+          "total_fees": 0,
+          "rights_used": 0,
+          "rights_remaining": 0,
+          "decisions": [
+            {
+              "accident_index": 0,
+              "event_key": "S2-L1-P1-5",
+              "station": 2,
+              "first_plan_no": 1,
+              "last_plan_no": 5,
+              "last_registered_at": "2026-03-05T08:00:00+00:00",
+              "loss": 16,
+              "payable": 13,
+              "balance_before": 100,
+              "balance_after_claim": 87,
+              "restoration_used": false,
+              "restoration_fee": 0,
+              "balance_after": 87,
+              "rights_remaining": 0
+            }
+          ]
+        },
+        "deductible_paid_before": 6,
+        "deductible_paid_after": 3,
+        "old_gap_product_retained": "station-2-late:v1"
+      }
+    }
+  },
+  "db": "var/control_demo.sqlite"
+}

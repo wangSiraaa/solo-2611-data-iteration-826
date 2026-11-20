@@ -140,6 +140,40 @@ CREATE TABLE IF NOT EXISTS potency_reports (
     details_json TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS control_measurements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    station INTEGER NOT NULL,
+    plan_no INTEGER NOT NULL,
+    level INTEGER NOT NULL,
+    center TEXT,
+    scale TEXT,
+    potency TEXT,
+    registered_at TEXT NOT NULL,
+    arrived_at TEXT NOT NULL,
+    received INTEGER NOT NULL,
+    source_ref TEXT,
+    updated_at TEXT NOT NULL,
+    UNIQUE (station, plan_no)
+);
+
+CREATE TABLE IF NOT EXISTS rework_losses (
+    station INTEGER NOT NULL,
+    plan_no INTEGER NOT NULL,
+    loss INTEGER NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (station, plan_no)
+);
+
+CREATE TABLE IF NOT EXISTS control_event_products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_ref TEXT NOT NULL UNIQUE,
+    version INTEGER NOT NULL,
+    scope TEXT NOT NULL,
+    source TEXT NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 """
 
 
@@ -794,3 +828,191 @@ class Store:
                 (batch_id,),
             ).fetchall()
         return [self.get_report(r["id"]) for r in rows]
+
+    # -- control-sample archive ------------------------------------------
+    def upsert_control_measurement(
+        self,
+        *,
+        station: int,
+        plan_no: int,
+        level: int,
+        center: Fraction | None,
+        scale: Fraction | None,
+        potency: Fraction | None,
+        registered_at: str,
+        arrived_at: str,
+        received: bool,
+        source_ref: str | None = None,
+    ) -> dict:
+        """Insert or replace one planned control item (keyed by station/plan).
+
+        A late arrival is simply a second upsert with ``received=True``; the
+        row keeps its original ``registered_at`` while ``arrived_at`` records
+        when the values actually landed.
+        """
+        self.conn.execute(
+            "INSERT INTO control_measurements(station, plan_no, level, center,"
+            " scale, potency, registered_at, arrived_at, received, source_ref,"
+            " updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            " ON CONFLICT(station, plan_no) DO UPDATE SET level=excluded.level,"
+            " center=excluded.center, scale=excluded.scale, potency=excluded.potency,"
+            " registered_at=excluded.registered_at, arrived_at=excluded.arrived_at,"
+            " received=excluded.received, source_ref=excluded.source_ref,"
+            " updated_at=excluded.updated_at",
+            (
+                station,
+                plan_no,
+                level,
+                None if center is None else _ftext(center),
+                None if scale is None else _ftext(scale),
+                None if potency is None else _ftext(potency),
+                registered_at,
+                arrived_at,
+                1 if received else 0,
+                source_ref,
+                _now(),
+            ),
+        )
+        self.conn.commit()
+        return self.get_control_measurement(station, plan_no)
+
+    def get_control_measurement(self, station: int, plan_no: int) -> dict:
+        row = self.conn.execute(
+            "SELECT * FROM control_measurements WHERE station = ? AND plan_no = ?",
+            (station, plan_no),
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(
+                f"control measurement station={station} plan={plan_no} not found"
+            )
+        return {
+            "id": row["id"],
+            "station": row["station"],
+            "plan_no": row["plan_no"],
+            "level": row["level"],
+            "center": None if row["center"] is None else parse_fraction(row["center"]),
+            "scale": None if row["scale"] is None else parse_fraction(row["scale"]),
+            "potency": None if row["potency"] is None else parse_fraction(row["potency"]),
+            "registered_at": row["registered_at"],
+            "arrived_at": row["arrived_at"],
+            "received": bool(row["received"]),
+            "source_ref": row["source_ref"],
+        }
+
+    def list_control_measurements(
+        self, *, station: int | None = None
+    ) -> list[dict]:
+        if station is None:
+            rows = self.conn.execute(
+                "SELECT station, plan_no FROM control_measurements"
+                " ORDER BY station, plan_no"
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT station, plan_no FROM control_measurements"
+                " WHERE station = ? ORDER BY plan_no",
+                (station,),
+            ).fetchall()
+        return [self.get_control_measurement(r["station"], r["plan_no"]) for r in rows]
+
+    # -- re-work losses ---------------------------------------------------
+    def set_rework_loss(self, station: int, plan_no: int, loss: int) -> None:
+        if isinstance(loss, bool) or not isinstance(loss, int) or loss < 0:
+            raise ValidationError("re-work loss must be a non-negative integer")
+        self.conn.execute(
+            "INSERT INTO rework_losses(station, plan_no, loss, updated_at)"
+            " VALUES (?, ?, ?, ?) ON CONFLICT(station, plan_no) DO UPDATE SET"
+            " loss=excluded.loss, updated_at=excluded.updated_at",
+            (station, plan_no, loss, _now()),
+        )
+        self.conn.commit()
+
+    def get_rework_losses(self) -> dict[tuple[int, int], int]:
+        rows = self.conn.execute(
+            "SELECT station, plan_no, loss FROM rework_losses"
+        ).fetchall()
+        return {(r["station"], r["plan_no"]): r["loss"] for r in rows}
+
+    # -- versioned control event products --------------------------------
+    def create_control_event_product(
+        self,
+        *,
+        product_ref: str,
+        version: int,
+        scope: str,
+        source: str,
+        snapshot: dict,
+    ) -> dict:
+        """Persist an immutable event product; idempotent on ``product_ref``.
+
+        Re-importing the same reference with an equivalent snapshot returns the
+        stored row; a conflicting snapshot under the same reference raises.
+        External, offline-readable products are stored alongside internal ones.
+        """
+        if isinstance(version, bool) or not isinstance(version, int) or version <= 0:
+            raise ValidationError("product version must be a positive integer")
+        if source not in ("internal", "external"):
+            raise ValidationError("source must be 'internal' or 'external'")
+        body = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
+        existing = self.conn.execute(
+            "SELECT id, snapshot_json FROM control_event_products"
+            " WHERE product_ref = ?",
+            (product_ref,),
+        ).fetchone()
+        if existing is not None:
+            if existing["snapshot_json"] != body:
+                raise ConflictError(
+                    f"event product {product_ref!r} already exists with a"
+                    " different snapshot"
+                )
+            return self.get_control_event_product(product_ref)
+        cur = self.conn.execute(
+            "INSERT INTO control_event_products(product_ref, version, scope,"
+            " source, snapshot_json, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (product_ref, version, scope, source, body, _now()),
+        )
+        self.conn.commit()
+        return self.get_control_event_product_by_id(cur.lastrowid)
+
+    def _row_to_event_product(self, row: sqlite3.Row) -> dict:
+        return {
+            "id": row["id"],
+            "product_ref": row["product_ref"],
+            "version": row["version"],
+            "scope": row["scope"],
+            "source": row["source"],
+            "snapshot": json.loads(row["snapshot_json"]),
+            "created_at": row["created_at"],
+        }
+
+    def get_control_event_product_by_id(self, product_id: int) -> dict:
+        row = self.conn.execute(
+            "SELECT * FROM control_event_products WHERE id = ?", (product_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"control event product {product_id} not found")
+        return self._row_to_event_product(row)
+
+    def get_control_event_product(self, product_ref: str) -> dict:
+        row = self.conn.execute(
+            "SELECT * FROM control_event_products WHERE product_ref = ?",
+            (product_ref,),
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"control event product {product_ref!r} not found")
+        return self._row_to_event_product(row)
+
+    def list_control_event_products(
+        self, *, scope: str | None = None
+    ) -> list[dict]:
+        if scope is None:
+            rows = self.conn.execute(
+                "SELECT id FROM control_event_products ORDER BY scope, version"
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT id FROM control_event_products WHERE scope = ?"
+                " ORDER BY version",
+                (scope,),
+            ).fetchall()
+        return [self.get_control_event_product_by_id(r["id"]) for r in rows]

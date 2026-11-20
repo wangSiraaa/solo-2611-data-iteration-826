@@ -131,43 +131,116 @@ s_i = abs(R_i - L_i)
 报告是追加式快照。`replay_report(report_id)` 使用该报告记录的**旧产品 ID** 重算，
 证明旧核算绑定旧输入：曲线更正后，旧报告的值与其重放值都不变。
 
-## 6. 目录
+## 6. 控制样失控事件与返工险限额恢复
+
+历史控制样按**工位 + 计划测定序号**归档（`titration/control_events.py` 为纯规则，
+`titration/control_service.py` 负责持久化与版本）。每条已收测定引用**冻结效价**，
+并带当时的控制水平、中心值与正尺度；残差全程用 `Fraction` 精确计算：
+
+```
+残差 = (效价 - 中心) / 尺度
+```
+
+### 报警规则（命中任一即报警）
+
+* **单项 `single`**：`abs(残差) >= 2`；
+* **双项 `paired`**：同工位同水平、计划号相邻的**延续前一项**存在且已收，两项残差
+  同号且绝对值均 `>= 1`。双项规则引用的前一项本身未必是报警/损失项，其源记录仍随
+  触发依据一并保留。
+
+缺测、换水平、计划号跳号都会中断“前一项”延续与事件延续；迟到测定以同一
+`(工位, 计划号)` 回填缺口后可把两件旧事件**合并为一件**。非报警项会分隔两段报警，
+但仍是下一项双项规则的候选前项。同工位同水平上连续报警的计划项归为一件事件，产品
+记录首尾号、每项触发依据（规则、残差、前项）与源记录。
+
+### 版本化、不可变、可离线读取的事件产品
+
+`publish_event_product(scope, station=...)` 从当前归档重建并发布不可变快照
+（`control_event_products` 表），同一 scope 每次发布版本号 +1，旧版本永久保留。快照
+内嵌全部输入测定与规则说明，可 `control-export` 导出为自包含 JSON，离线用
+`events_from_product` + `build_accidents` + `optimize` 直接复算，也可
+`control-import` 作为 `source='external'` 的等价产品导回（同 `product_ref` 幂等，
+内容冲突则报错）。
+
+### 返工险优化（`titration/reinsurance.py`）
+
+保单参数：每次事故自负额 `D`、初始可赔限额 `L`、保期最多恢复权数（≤6）、每次恢复
+固定保费 `F`。一件事故只汇总其报警计划项的**非负整数**损失；事故按最后报警项登记时刻
+排序，同时刻按工位、首项序号排序。结清规则：
+
+```
+本次应赔 = max(0, min(max(0, 损失 - D), 当时余额))
+余额    -= 应赔
+```
+
+每件事故结清后若余额 `< L`，可消耗一份权利、支付 `F` 把余额重置为 `L`，恢复只对
+**以后**的事故生效。优化器是 `(事故序号, 剩余权数, 余额)` 备忘录 DP，金额为 Python
+任意精度整数；`brute_force_optimum` 枚举全部恢复位作为穷举对照，测试中逐例比对。
+最多 80 件事故、6 份恢复权。输出逐案列出损失、应赔、索赔前后余额、是否用权、保费、
+结清后余额与剩余权数；`evaluate_plan` 可重放任意指定方案（并列最优任选其一可执行）。
+
+同一事件产品可用 `recompute_policy` 反复复算不同保单，归档与产品均不改变。
+
+### 端到端合成演示（`titration/control_demo.py`）
+
+冻结效价经现有 `PotencyService.compute_sample` 入口（导入的公开端点产品）取得后归档：
+
+* 工位 1 残差 `+2,0,+2,0,+2` → 三件事故、损失 `2,6,6`：`D=0,L=6,F=1,R=1` 最优净赔
+  **11**（第二件后恢复）；`F=7` 时保留权利净赔 **6**；末项订正为残差 0 后只剩两件、
+  净额 **7**，而 v1 历史版重查仍为 11；
+* 工位 2 先缺测（两件事故、两份自负额），迟到测定回填后合并为一件，自负额合计由
+  **6 降到 3**，净赔由 7 升到 13；
+* 导出的 v2 快照在纯 JSON 路径下离线复算，结果与库内一致。
+
+## 7. 目录
 
 ```
 titration/
-  exact.py         精确有理数解析/规范化与错误类型
-  solver.py        DP、暴力参照、精确落选分析
-  curve_service.py 曲线/方法/候选/发布/解释
-  potency.py       样品、批次、加权、重放
-  store.py         SQLite 模式、版本快照、不可变产品、报告
-  demo.py          端到端合成场景
-  validation.py    可复跑校验，写出 results/validation.json
-  cli.py           命令行入口
+  exact.py             精确有理数解析/规范化与错误类型
+  solver.py            DP、暴力参照、精确落选分析
+  curve_service.py     曲线/方法/候选/发布/解释
+  potency.py           样品、批次、加权、重放
+  control_events.py    残差/单项/双项规则、事件归并（纯函数）
+  reinsurance.py       保单、事故损失、限额恢复 DP 与穷举对照
+  control_service.py   控制样归档、版本化事件产品、多保单复算
+  control_demo.py      失控事件 + 返工险端到端合成场景
+  store.py             SQLite 模式、版本快照、不可变产品、报告
+  demo.py              端到端合成场景
+  validation.py        可复跑校验，写出 results/validation.json
+  cli.py               命令行入口
 tests/test_titration.py
+tests/test_control_insurance.py
 results/demo.json
 results/validation.json
+results/control_demo.json
+results/event_product_station1_v2.json
 ```
 
-## 7. 运行
+## 8. 运行
 
 ```bash
-python3 -m pytest -q                                   # 35 项单元测试
+python3 -m pytest -q                                   # 66 项单元测试
 python3 -m titration.cli --db var/demo.sqlite demo     # 端到端演示 -> results/demo.json
+python3 -m titration.cli --db var/control_demo.sqlite \
+    control-demo                                       # 失控事件+返工险 -> results/control_demo.json
 python3 -m titration.cli --db var/validation.sqlite \
     validate --out results/validation.json             # 15 项校验
 ```
 
-常用子命令：
+常用控制样/保单子命令：
 
 ```bash
-python3 -m titration.cli curve-create --name c --volumes 0 1 4 5 8 11 12 16 17 \
-    --potentials 0 1 4 64 184 304 344 348 349
-python3 -m titration.cli method-create --name m --low-volume 0 --high-volume 30 \
-    --threshold 10 --k 2 --min-gap 2 --equivalence-index 2
-python3 -m titration.cli publish --curve-id 1 --method-id 1
-python3 -m titration.cli explain --curve-id 1 --method-id 1
-python3 -m titration.cli batch-eval --batch-id 1
-python3 -m titration.cli import-product --file external_product.json
+python3 -m titration.cli --db var/c.sqlite control-record \
+    --station 1 --plan-no 1 --level 1 --center 100 --scale 10 \
+    --potency 120 --registered-at 2026-01-01T08:00:00Z
+python3 -m titration.cli --db var/c.sqlite control-record \
+    --station 1 --plan-no 2 --level 1 --registered-at 2026-01-02T08:00:00Z --missing
+python3 -m titration.cli --db var/c.sqlite control-loss --station 1 --plan-no 1 --loss 2
+python3 -m titration.cli --db var/c.sqlite control-publish --scope hist --station 1
+python3 -m titration.cli --db var/c.sqlite policy-recompute \
+    --ref hist:v1 --deductible 0 --limit 6 --restorations 1 --fee 1
+python3 -m titration.cli --db var/c.sqlite control-export --ref hist:v1 --out event.json
+python3 -m titration.cli --db var/other.sqlite control-import --file event.json
 ```
 
 ## 8. 验证覆盖（对应题面要求）
@@ -187,6 +260,18 @@ python3 -m titration.cli import-product --file external_product.json
 | 旧核算绑定旧输入（重放不变） | `replay_report` 与上述校验 |
 | 不读取私有候选表 | `potency_uses_only_public_products` |
 | 无合法组合 → NO_ENDPOINT（不少选） | `no_endpoint_explicit`、发布失败不落库 |
+| 残差精确有理数、单项/双项阈值边界 | `test_residual_is_exact_rational`、`test_paired_threshold_boundary_exact` |
+| 双项前项本身非报警、异号不配对 | `test_paired_rule_requires_both_abs_at_least_one_and_same_sign` |
+| 缺测/换水平/跳号中断延续 | `test_missing_item_breaks_continuation_and_event`、`test_level_change_breaks_continuation`、`test_plan_gap_breaks_continuation` |
+| 迟到测定回填并合并事件 | `test_late_arrival_fills_gap_and_merges_events`、服务层同名测试 |
+| 题面 11/6/7 三场景 | `test_brief_policy_scenarios`、`test_versioned_products_retain_history` |
+| DP 与穷举恢复位枚举一致 | `test_optimizer_matches_brute_force_small_cases`（3240 例）+ 300 随机例 |
+| 大整数精确、上限校验 | `test_large_integers_are_exact`（10^30）、`test_policy_validation_limits`、`test_too_many_accidents_rejected` |
+| 同一事件产品复算多保单 | `test_same_event_product_recomputes_different_policies` |
+| 事件产品版本保留与历史重查 | `test_versioned_products_retain_history` |
+| 离线 JSON 等价产品导出/导回 | `test_offline_snapshot_roundtrip`、控制演示 `offline_equivalent_product` |
+| 迟到合并后自负额变化 | `test_late_arrival_merges_events_and_changes_deductible`（6 → 3） |
+| 效价经现有入口进入归档 | `test_potency_entry_feeds_control_archive` |
 
 ## 9. 边界与取舍
 
@@ -197,3 +282,9 @@ python3 -m titration.cli import-product --file external_product.json
 * 曲线与方法历史版本用于审计与重放；产品本身不可变，不会被覆盖。
 * 产品按 `(curve, curve_version, method, method_version)` 唯一；重复发布会返回既有产品
   而不重复写入。
+* 控制事件按工位独立重建；事件产品按 `scope` 版本化，发布时可用 `station` 限定归档范围。
+  归档以 `(工位, 计划号)` 为唯一键，迟到/订正用 upsert 覆盖，但已发布的事件产品快照
+  不可变，历史版始终可重查。
+* 返工损失与金额一律为非负整数（Python 任意精度）；非报警计划项的损失不进入事故汇总，
+  负损失被拒绝。恢复权仅在余额低于 `L` 且权利未用尽时可使用，且只作用于后续事故；DP
+  在并列时确定性地优先保留权利，`evaluate_plan` 可给出任一其他可执行最优方案。

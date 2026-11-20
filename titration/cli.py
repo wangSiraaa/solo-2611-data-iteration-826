@@ -9,7 +9,12 @@ Subcommands
 ``sample-create`` / ``sample-show`` / ``sample-eval``
 ``batch-create`` / ``batch-eval`` / ``report-show``
 ``import-product``   consume an external same-format product
+``control-record`` / ``control-loss`` / ``control-publish`` /
+``control-show`` / ``control-list`` / ``control-export`` / ``control-import``
+                     control archive, versioned out-of-control event products
+``policy-recompute`` optimize one insurance policy on a fixed event product
 ``demo``             build the synthetic validation scenario end-to-end
+``control-demo``     out-of-control events + re-work insurance end-to-end
 ``validate``         run the self-checks and write a JSON result
 """
 
@@ -21,6 +26,7 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
+from .control_service import ControlService
 from .curve_service import CurveService
 from .exact import (
     ConflictError,
@@ -29,6 +35,7 @@ from .exact import (
     fraction_to_json,
 )
 from .potency import PotencyService
+from .reinsurance import Policy
 from .store import Store
 
 
@@ -183,6 +190,70 @@ def _cmd_import_product(args: argparse.Namespace, svc: PotencyService) -> None:
     _dump(_json_rational(svc.import_external_product(payload)))
 
 
+# -- control archive / events / insurance --------------------------------
+def _cmd_control_record(args: argparse.Namespace, svc: ControlService) -> None:
+    _dump(
+        _json_rational(
+            svc.record_measurement(
+                station=args.station,
+                plan_no=args.plan_no,
+                level=args.level,
+                center=args.center,
+                scale=args.scale,
+                potency=args.potency,
+                registered_at=args.registered_at,
+                arrived_at=args.arrived_at,
+                received=not args.missing,
+                source_ref=args.source_ref,
+            )
+        )
+    )
+
+
+def _cmd_control_loss(args: argparse.Namespace, svc: ControlService) -> None:
+    svc.set_rework_loss(args.station, args.plan_no, args.loss)
+    _dump({"station": args.station, "plan_no": args.plan_no, "loss": args.loss})
+
+
+def _cmd_control_publish(args: argparse.Namespace, svc: ControlService) -> None:
+    product = svc.publish_event_product(
+        args.scope, station=args.station, note=args.note
+    )
+    _dump(_json_rational(product))
+
+
+def _cmd_control_show(args: argparse.Namespace, svc: ControlService) -> None:
+    _dump(_json_rational(svc.get_event_product(args.ref)))
+
+
+def _cmd_control_list(args: argparse.Namespace, svc: ControlService) -> None:
+    _dump(_json_rational(svc.list_event_products(scope=args.scope)))
+
+
+def _cmd_control_export(args: argparse.Namespace, svc: ControlService) -> None:
+    path = svc.export_event_product(args.ref, args.out)
+    _dump({"exported_to": str(path)})
+
+
+def _cmd_control_import(args: argparse.Namespace, svc: ControlService) -> None:
+    payload = json.loads(Path(args.file).read_text())
+    _dump(_json_rational(svc.import_event_product(payload)))
+
+
+def _cmd_policy_recompute(args: argparse.Namespace, svc: ControlService) -> None:
+    policy = Policy.from_values(
+        args.deductible, args.limit, args.restorations, args.fee
+    )
+    plan = svc.recompute_policy(args.ref, policy)
+    _dump(plan.to_dict())
+
+
+def _cmd_control_demo(args: argparse.Namespace, svc: Any) -> None:
+    from .control_demo import run_control_demo
+
+    _dump(run_control_demo(args.db))
+
+
 # -- demo / validation ----------------------------------------------------
 def _cmd_demo(args: argparse.Namespace, svc: Any) -> None:
     from .demo import run_demo
@@ -302,6 +373,62 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--file", required=True)
     p.set_defaults(func=_cmd_import_product)
 
+    # -- control archive / event products / insurance --------------------
+    p = sub.add_parser("control-record", help="archive one planned control item")
+    p.add_argument("--station", type=int, required=True)
+    p.add_argument("--plan-no", type=int, required=True)
+    p.add_argument("--level", type=int, required=True)
+    p.add_argument("--center")
+    p.add_argument("--scale")
+    p.add_argument("--potency")
+    p.add_argument("--registered-at", required=True)
+    p.add_argument("--arrived-at")
+    p.add_argument("--missing", action="store_true",
+                   help="store an outstanding item that breaks continuation")
+    p.add_argument("--source-ref")
+    p.set_defaults(func=_cmd_control_record)
+
+    p = sub.add_parser("control-loss", help="set re-work loss for a plan item")
+    p.add_argument("--station", type=int, required=True)
+    p.add_argument("--plan-no", type=int, required=True)
+    p.add_argument("--loss", type=int, required=True)
+    p.set_defaults(func=_cmd_control_loss)
+
+    p = sub.add_parser("control-publish", help="publish a versioned event product")
+    p.add_argument("--scope", required=True)
+    p.add_argument("--station", type=int)
+    p.add_argument("--note")
+    p.set_defaults(func=_cmd_control_publish)
+
+    p = sub.add_parser("control-show", help="show one stored event product")
+    p.add_argument("--ref", required=True)
+    p.set_defaults(func=_cmd_control_show)
+
+    p = sub.add_parser("control-list", help="list event products")
+    p.add_argument("--scope")
+    p.set_defaults(func=_cmd_control_list)
+
+    p = sub.add_parser("control-export", help="export an offline JSON snapshot")
+    p.add_argument("--ref", required=True)
+    p.add_argument("--out", required=True)
+    p.set_defaults(func=_cmd_control_export)
+
+    p = sub.add_parser("control-import", help="import an external event product")
+    p.add_argument("--file", required=True)
+    p.set_defaults(func=_cmd_control_import)
+
+    p = sub.add_parser("policy-recompute",
+                       help="recompute one policy on a fixed event product")
+    p.add_argument("--ref", required=True)
+    p.add_argument("--deductible", type=int, required=True)
+    p.add_argument("--limit", type=int, required=True)
+    p.add_argument("--restorations", type=int, required=True)
+    p.add_argument("--fee", type=int, required=True)
+    p.set_defaults(func=_cmd_policy_recompute)
+
+    p = sub.add_parser("control-demo")
+    p.set_defaults(func=_cmd_control_demo)
+
     p = sub.add_parser("demo")
     p.set_defaults(func=_cmd_demo)
 
@@ -329,8 +456,19 @@ def main(argv: list[str] | None = None) -> int:
             "explain",
         }:
             svc = CurveService(store)
-        elif args.command in {"demo", "validate"}:
+        elif args.command in {"demo", "validate", "control-demo"}:
             svc = None
+        elif args.command in {
+            "control-record",
+            "control-loss",
+            "control-publish",
+            "control-show",
+            "control-list",
+            "control-export",
+            "control-import",
+            "policy-recompute",
+        }:
+            svc = ControlService(store)
         else:
             svc = PotencyService(store)
         args.func(args, svc)

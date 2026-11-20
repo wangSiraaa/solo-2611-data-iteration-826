@@ -78,5 +78,5 @@
       "detail": "potency computed with private candidates deleted"
     }
   ],
-  "db": "var/validate.sqlite"
+  "db": "var/validation.sqlite"
 }
